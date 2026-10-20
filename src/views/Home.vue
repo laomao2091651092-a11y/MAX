@@ -6,28 +6,29 @@
     <!-- ============ HERO ============ -->
     <section class="hero">
       <h1 class="small-team">
-        <span class="word"><span>Small</span></span>
-        <span class="word"><span>team,</span></span>
-        <span class="word"><span>big</span></span>
-        <span class="word"><span>results</span></span>
+        <span class="word"><span>Two</span></span>
+        <span class="word"><span>stars,</span></span>
+        <span class="word"><span>one</span></span>
+        <span class="word"><span>Yan</span></span>
       </h1>
 
       <div class="big-results-wrap">
         <div class="big-results" aria-hidden="true">
-          <span class="letter">b</span><span class="letter">i</span><span class="letter">g</span><span class="letter">&nbsp;</span><span class="letter">r</span><span class="letter">e</span><span class="letter">s</span><span class="letter">u</span><span class="letter">l</span><span class="letter">t</span><span class="letter">s</span>
+          <span class="letter">J</span><span class="letter">i</span><span class="letter">n</span><span class="letter">g</span><span class="letter">Y</span><span class="letter">a</span><span class="letter">n</span>
         </div>
       </div>
 
       <!-- 卡片行 -->
       <div class="cards-row">
-        <div class="card card-1" data-rot="-8" data-depth="12"></div>
-        <div class="card card-2" data-rot="-5" data-depth="9"></div>
-        <div class="card card-3" data-rot="-3" data-depth="7"></div>
-        <div class="card card-4" data-rot="-1.5" data-depth="5"></div>
-        <div class="card card-5" data-rot="0" data-depth="10"></div>
-        <div class="card card-6" data-rot="2" data-depth="6"></div>
-        <div class="card card-7" data-rot="4" data-depth="8"></div>
-        <div class="card card-8" data-rot="7" data-depth="11"></div>
+        <div
+          v-for="(c, i) in coverImages"
+          :key="c.id"
+          class="card"
+          :class="`card-${i + 1}`"
+          :data-rot="[-8,-5,-3,-1.5,0,2,4,7][i]"
+          :data-depth="[12,9,7,5,10,6,8,11][i]"
+          :style="c.img ? { backgroundImage: `url(${c.img})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}"
+        ></div>
       </div>
 
       <div class="subline" id="subline">
@@ -104,6 +105,9 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import './derm.css'
+import { site } from '../data/site.js'
+
+const coverImages = site.coverImages
 
 gsap.registerPlugin(ScrollTrigger)
 

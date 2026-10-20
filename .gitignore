@@ -1,29 +1,10 @@
-# ===== 依赖（不用上传，太大） =====
-node_modules/
-
-# ===== 构建产物（部署时自动生成） =====
+﻿node_modules/
 dist/
-
-# ===== 日志 =====
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# ===== 环境变量（私密信息） =====
 .env
 .env.local
-.env.*.local
-
-# ===== 系统垃圾文件 =====
 .DS_Store
 Thumbs.db
-desktop.ini
-
-# ===== IDE 配置（各人不同） =====
 .idea/
 .vscode/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
+src/github*

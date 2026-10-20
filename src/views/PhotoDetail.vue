@@ -576,22 +576,35 @@ onUnmounted(() => {
 /* ============ 响应式 ============ */
 @media (max-width: 900px) {
   .pd-body {
-    align-items: flex-start;
+    align-items: center;          /* 水平居中 */
     flex-direction: column;
-    padding-top: 20px;
+    padding-top: 10px;
+    min-height: 80vh;
+  }
+  .pd-visual {
+    width: 100%;
+    right: auto;
+    top: 0;
+    height: 55vh;
+    order: 1;
+    opacity: 1;
+    display: flex;               /* 约束布局：气泡居中 */
+    align-items: center;
+    justify-content: center;
   }
   .pd-content {
     width: 100%;
-    padding-top: 2vh;
+    padding-top: 20px;
+    order: 2;
+    text-align: center;
+    max-width: 500px;
   }
   .pd-content h1 {
-    font-size: clamp(40px, 11vw, 64px);
+    font-size: clamp(36px, 9vw, 56px);
   }
-  .pd-visual {
-    width: 120vw;
-    right: -60vw;
-    top: 55%;
-    opacity: 0.9;
+  .pd-nav {
+    justify-content: center;
+    flex-wrap: wrap;
   }
 }
 @media (max-width: 650px) {
@@ -599,8 +612,7 @@ onUnmounted(() => {
     padding: 18px 20px;
   }
   .pd-visual {
-    width: 150vw;
-    right: -95vw;
+    height: 48vh;
   }
   .pd-meta {
     display: none;

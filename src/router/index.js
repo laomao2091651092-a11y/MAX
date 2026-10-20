@@ -4,6 +4,7 @@ import Gallery from '../views/Gallery.vue'
 import Menu from '../views/Menu.vue'
 import PhotoDetail from '../views/PhotoDetail.vue'
 import ZoomGallery from '../views/ZoomGallery.vue'
+import Cloud from '../views/Cloud.vue'
 
 // 路由表：每个路由对应一个页面
 const routes = [
@@ -16,6 +17,11 @@ const routes = [
     path: '/gallery',
     name: 'Gallery',
     component: Gallery
+  },
+  {
+    path: '/cloud',
+    name: 'Cloud',
+    component: Cloud
   },
   {
     path: '/menu',

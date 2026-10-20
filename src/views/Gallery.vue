@@ -1,31 +1,69 @@
 <template>
   <div class="page gallery-page">
-    <!-- ============ 页面标题 ============ -->
-    <div class="gallery-head">
-      <div class="eyebrow">Gallery</div>
-      <h2>我们的<span class="grad">照片墙</span></h2>
-      <p>每一张都是甜甜的回忆，点击照片可以放大看 💕</p>
+    <!-- ============ 页面标题（封面风格：大标题 + 背景装饰大字） ============ -->
+    <div class="gallery-hero" ref="heroRef">
+      <div class="hero-bg-text" ref="bgTextRef">
+        <span class="letter">两</span><span class="letter">星</span><span class="letter">一</span><span class="letter">妍</span>
+      </div>
+      <div class="gallery-head">
+        <div class="eyebrow">Gallery</div>
+        <h2 class="hero-title">
+          <span class="char" style="--d:0s">我</span><span class="char" style="--d:0.06s">们</span><span class="char" style="--d:0.12s">的</span><span class="char grad" style="--d:0.18s">照</span><span class="char grad" style="--d:0.24s">片</span><span class="char grad" style="--d:0.30s">墙</span>
+        </h2>
+        <p class="hero-sub">每一张都是甜甜的回忆，点击照片可以放大看 💕</p>
+      </div>
     </div>
 
-    <!-- ============ 横竖屏切换按钮 ============ -->
-    <div class="gallery-tabs" role="tablist">
-      <button
-        type="button"
-        role="tab"
-        :class="{ active: activeTab === 'portrait' }"
-        @click="activeTab = 'portrait'"
-      >
-        📱 竖屏回忆
-      </button>
-      <button
-        type="button"
-        role="tab"
-        :class="{ active: activeTab === 'landscape' }"
-        @click="activeTab = 'landscape'"
-      >
-        🖼️ 横屏大片
+    <!-- ============ 横竖屏切换 + 上传按钮（同一行） ============ -->
+    <div class="tabs-row">
+      <div class="gallery-tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          :class="{ active: activeTab === 'portrait' }"
+          @click="activeTab = 'portrait'"
+        >
+          📱 竖屏回忆
+        </button>
+        <button
+          type="button"
+          role="tab"
+          :class="{ active: activeTab === 'landscape' }"
+          @click="activeTab = 'landscape'"
+        >
+          🖼️ 横屏大片
+        </button>
+      </div>
+      <button class="tabs-upload" :disabled="uploading" @click="triggerUpload">
+        {{ uploading ? '上传中...' : '📤 上传' }}
       </button>
     </div>
+
+    <!-- ============ 隐藏文件选择器 ============ -->
+    <input ref="fileInput" type="file" accept="image/*" hidden @change="onFileChange" />
+
+    <!-- ============ 云端精选照片区（从相册页 ⭐ 标记的） ============ -->
+    <section v-if="featuredPhotos.length" class="cloud-sec">
+      <div class="sec-head">
+        <div class="sec-eyebrow"><span></span>FEATURED</div>
+        <h3 class="sec-title">⭐ 云端精选（{{ featuredPhotos.length }} 张）</h3>
+        <p class="sec-sub">
+          从 <router-link to="/cloud" class="manage-link">☁️ 云端相册</router-link>
+          点 ⭐ 加入展示，最多 16 张
+        </p>
+      </div>
+      <div class="photo-grid photo-grid--portrait">
+        <div
+          v-for="p in featuredPhotos"
+          :key="p.id"
+          class="photo-card"
+          @click="openCloudPhoto(p)"
+        >
+          <img :src="`${API_BASE}/uploads/${p.filename}`" :alt="p.title" class="photo-img" />
+          <div class="photo-title">{{ p.title }}</div>
+        </div>
+      </div>
+    </section>
 
     <!-- ============ 竖屏回忆区（9:16 卡片，默认显示） ============ -->
     <section v-if="activeTab === 'portrait'" class="gallery-sec">
@@ -121,6 +159,68 @@ const lightboxIndex = ref(null)
 // 当前显示的区：'portrait' = 竖屏回忆（默认） / 'landscape' = 横屏大片
 const activeTab = ref('portrait')
 
+// ===== 云端精选照片（画廊展示位） =====
+const API_BASE = 'http://localhost:8080'
+const featuredPhotos = ref([])      // 后端精选的照片
+const uploading = ref(false)      // 上传中状态
+const fileInput = ref(null)         // 隐藏的文件选择器
+
+// 从后端拉精选照片
+async function loadFeaturedPhotos() {
+  try {
+    const res = await fetch(`${API_BASE}/api/photos`)
+    const all = await res.json()
+    featuredPhotos.value = all.filter(p => p.isFeatured).slice(0, 16)
+  } catch (e) {
+    console.warn('后端未启动，云端精选为空', e)
+  }
+}
+
+// 点"上传照片"按钮 → 打开文件选择
+function triggerUpload() {
+  fileInput.value.click()
+}
+
+// 选完文件后上传
+async function onFileChange(e) {
+  const file = e.target.files[0]
+  if (!file) return
+
+  // 弹出密码输入框（上传前验证身份）
+  const token = prompt('请输入上传密码：')
+  if (!token) { e.target.value = ''; return }  // 取消就不传
+
+  uploading.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('title', file.name.replace(/\.[^.]+$/, '').slice(0, 30))
+    fd.append('category', activeTab.value === 'portrait' ? 'portrait' : 'landscape')
+    const res = await fetch(`${API_BASE}/api/photos/upload`, {
+      method: 'POST',
+      headers: { 'X-Upload-Token': token },   // 密码放在请求头
+      body: fd,
+    })
+    const data = await res.json()
+    if (data.code === 0) {
+      alert('✅ 上传成功！去 ☁️ 相册 点 ⭐ 加入展示')
+      loadFeaturedPhotos()
+    } else {
+      alert('❌ ' + data.message)
+    }
+  } catch (err) {
+    alert('❌ 上传失败，请确认后端已启动（IDEA 在跑）')
+  } finally {
+    uploading.value = false
+    e.target.value = ''
+  }
+}
+
+// 点击云端照片 → 新窗口看大图
+function openCloudPhoto(p) {
+  window.open(`${API_BASE}/uploads/${p.filename}`, '_blank')
+}
+
 // 根据文件名拼出图片路径（图片放在 src/assets/images/gallery/ 下）
 function requireImg(name) {
   return new URL(`../assets/images/gallery/${name}`, import.meta.url).href
@@ -188,16 +288,105 @@ function onKeydown(e) {
   else if (e.key === 'Escape') closeLightbox()
 }
 
+// ===== 鼠标视差：背景大字"两星一妍"跟着鼠标轻微移动 =====
+const heroRef = ref(null)
+const bgTextRef = ref(null)
+let rafId = null
+
+function onHeroMouse(e) {
+  if (!heroRef.value || !bgTextRef.value) return
+  const rect = heroRef.value.getBoundingClientRect()
+  // 鼠标在 hero 区域内的相对位置 -0.5 ~ 0.5
+  const x = (e.clientX - rect.left) / rect.width - 0.5
+  const y = (e.clientY - rect.top) / rect.height - 0.5
+  // 目标位移（轻微，不晃眼）
+  const tx = x * 30   // 左右偏移 ±15px
+  const ty = y * 20   // 上下偏移 ±10px
+  if (rafId) cancelAnimationFrame(rafId)
+  rafId = requestAnimationFrame(() => {
+    bgTextRef.value.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`
+  })
+}
+
 // 页面加载时绑定键盘监听，卸载时移除（避免内存泄漏）
-onMounted(() => window.addEventListener('keydown', onKeydown))
-onUnmounted(() => window.removeEventListener('keydown', onKeydown))
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+  loadFeaturedPhotos()   // 拉取后端精选照片
+  if (heroRef.value) heroRef.value.addEventListener('mousemove', onHeroMouse)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+  if (heroRef.value) heroRef.value.removeEventListener('mousemove', onHeroMouse)
+  if (rafId) cancelAnimationFrame(rafId)
+})
 </script>
 
 <style scoped>
-/* ============ 页面标题 ============ */
-.gallery-head {
+/* ============ 封面风格标题区 ============ */
+.gallery-hero {
+  position: relative;
   max-width: 1280px;
-  margin: 0 auto 50px;
+  margin: 0 auto 40px;
+  padding: 80px 60px 120px;   /* 左右边距加大到 60px */
+  overflow: hidden;
+}
+/* 背景巨大装饰字（两星一妍）—— 实心浅灰，和封面一致 */
+.hero-bg-text {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(90px, 20vw, 260px);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #c9b89a;              /* 实心浅灰，和封面 big results 一致 */
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  transition: transform 0.3s ease-out;   /* 鼠标跟随平滑 */
+  animation: bg-in 1s ease 0.2s backwards;
+}
+.hero-bg-text .letter {
+  display: inline-block;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hero-bg-text:hover .letter {
+  transform: translateY(-6px);
+}
+@keyframes bg-in {
+  from { opacity: 0; transform: translate(-50%, -30%); }
+}
+.gallery-head {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+.hero-title {
+  font-weight: 900;
+  font-size: clamp(48px, 8vw, 110px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 20px 0;
+  white-space: nowrap;
+}
+.hero-sub {
+  font-size: 16px;
+  color: #6b6560;
+}
+/* 每个字入场跳动（staggered） */
+.char {
+  display: inline-block;
+  animation: char-pop 0.7s cubic-bezier(0.22, 1, 0.36, 1) var(--d) backwards;
+}
+@keyframes char-pop {
+  from {
+    opacity: 0;
+    transform: translateY(50px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .eyebrow {
   display: inline-flex;
@@ -238,12 +427,78 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   color: #2b2b30;
 }
 
+/* ============ 切换 + 上传按钮同一行 ============ */
+.tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  width: fit-content;
+  margin: 0 auto 40px;
+}
+.tabs-upload {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #d9351f, #f58b4e);
+  box-shadow: 0 6px 18px rgba(217, 53, 31, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.tabs-upload:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(217, 53, 31, 0.4);
+}
+.tabs-upload:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* 管理相册链接 */
+.manage-link {
+  color: #d9351f;
+  text-decoration: none;
+  font-weight: 600;
+}
+.manage-link:hover { text-decoration: underline; }
+
+/* ============ 云端照片删除按钮 ============ */
+.photo-del {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 0;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+}
+.photo-card:hover .photo-del {
+  opacity: 1;
+}
+.photo-del:hover {
+  background: #d9351f;
+}
+
 /* ============ 横竖屏切换按钮组 ============ */
 .gallery-tabs {
   display: flex;
   gap: 4px;
   width: fit-content;
-  margin: 0 auto 40px;
+  margin: 0;
   padding: 5px;
   background: #ede6d6;
   border: 1px solid rgba(106, 72, 49, 0.12);
@@ -526,6 +781,31 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   }
   .lb-next {
     right: 12px;
+  }
+  /* ===== 手机端补充适配 ===== */
+  .gallery-hero {
+    padding: 50px 20px 70px;
+  }
+  .hero-title {
+    font-size: clamp(40px, 11vw, 60px);
+  }
+  .hero-bg-text {
+    font-size: clamp(60px, 18vw, 120px);
+  }
+  .tabs-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tabs-upload {
+    width: 100%;
+    max-width: 260px;
+  }
+  .gallery-tabs {
+    width: 100%;
+    max-width: 320px;
+  }
+  .gallery-head h2 {
+    font-size: 36px;
   }
 }
 </style>

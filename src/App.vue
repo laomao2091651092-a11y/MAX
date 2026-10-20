@@ -8,11 +8,14 @@
         <span class="logo-name">{{ site.name }}</span>
       </router-link>
 
-      <!-- 功能菜单：画廊 / 点菜 -->
+      <!-- 功能菜单：画廊 / 相册 / 点菜 -->
       <ul class="nav-links">
         <li><router-link to="/">封面</router-link></li>
         <li><router-link to="/gallery">画廊</router-link></li>
+        <li><router-link to="/cloud">相册</router-link></li>
         <li><router-link to="/menu">点菜</router-link></li>
+        <li><a href="/haunt.html">幽灵控制台 👻</a></li>
+        <li><a href="/wan-sheng.html">万圣来啦 🎃</a></li>
       </ul>
 
       <!-- 右侧按钮 -->
@@ -155,13 +158,25 @@ body {
 /* ============ 响应式：手机端 ============ */
 @media (max-width: 750px) {
   .nav {
-    padding: 18px 18px;
+    padding: 14px 16px;
+    flex-wrap: wrap;          /* 允许换行 */
+    gap: 10px;
   }
   .nav-links {
-    gap: 18px;
+    order: 3;                 /* 导航链接换到第二行 */
+    width: 100%;
+    justify-content: center;
+    gap: 20px;
+  }
+  .nav-links a {
+    font-size: 13px;
+  }
+  .nav-cta {
+    padding: 8px 16px;
+    font-size: 12px;
   }
   .page {
-    padding: 110px 20px 60px;
+    padding: 140px 16px 60px;
   }
 }
 </style>
