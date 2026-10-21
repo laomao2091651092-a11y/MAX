@@ -363,9 +363,9 @@ onUnmounted(() => {
 }
 .hero-title {
   font-weight: 900;
-  font-size: clamp(48px, 8vw, 110px);
+  font-size: clamp(90px, 20vw, 260px);
   line-height: 1.05;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.15em;
   margin: 20px 0;
   white-space: nowrap;
 }
@@ -408,10 +408,10 @@ onUnmounted(() => {
   box-shadow: 0 0 0 3px rgba(217, 53, 31, 0.2);
 }
 .gallery-head h2 {
-  font-weight: 700;
-  font-size: clamp(34px, 4.4vw, 60px);
-  line-height: 1;
-  letter-spacing: -0.03em;
+  font-weight: 900;
+  font-size: clamp(90px, 20vw, 26px);
+  line-height: 1.05;
+  letter-spacing: 0.15em;
 }
 .gallery-head .grad {
   font-style: italic;
@@ -787,7 +787,7 @@ onUnmounted(() => {
     padding: 50px 20px 70px;
   }
   .hero-title {
-    font-size: clamp(40px, 11vw, 60px);
+    font-size: clamp(60px, 18vw, 120px);
   }
   .hero-bg-text {
     font-size: clamp(60px, 18vw, 120px);

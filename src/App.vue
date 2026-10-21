@@ -1,19 +1,27 @@
 <template>
   <div class="app-shell">
-    <!-- ============ 全局导航（DERMEXCEL 风格，所有页面共用） ============ -->
+    <!-- ============ 全局导航 ============ -->
     <nav class="nav">
-      <!-- Logo：渐变圆点 + 站名（改 src/data/site.js 里的 name） -->
+      <!-- Logo -->
       <router-link to="/" class="logo">
         <span class="logo-dot"></span>
         <span class="logo-name">{{ site.name }}</span>
       </router-link>
 
-      <!-- 功能菜单：画廊 / 相册 / 点菜 -->
-      <ul class="nav-links">
-        <li><router-link to="/">封面</router-link></li>
-        <li><router-link to="/gallery">画廊</router-link></li>
-        <li><router-link to="/cloud">相册</router-link></li>
-        <li><router-link to="/menu">点菜</router-link></li>
+      <!-- 汉堡菜单按钮（手机端显示） -->
+      <button class="hamburger" @click="menuOpen = !menuOpen" aria-label="菜单">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- 功能菜单 -->
+      <ul class="nav-links" :class="{ open: menuOpen }">
+        <li><router-link to="/" @click="menuOpen = false">封面</router-link></li>
+        <li><router-link to="/gallery" @click="menuOpen = false">画廊</router-link></li>
+        <li><router-link to="/cloud" @click="menuOpen = false">相册</router-link></li>
+        <li><router-link to="/tarot" @click="menuOpen = false">塔罗占卜 🔮</router-link></li>
+        <li><router-link to="/menu" @click="menuOpen = false">点菜</router-link></li>
         <li><a href="/haunt.html">幽灵控制台 👻</a></li>
         <li><a href="/wan-sheng.html">万圣来啦 🎃</a></li>
       </ul>
@@ -22,14 +30,15 @@
       <router-link to="/menu" class="nav-cta">今天想吃 🍽️</router-link>
     </nav>
 
-    <!-- 路由出口：各页面在这里渲染 -->
+    <!-- 路由出口 -->
     <router-view />
   </div>
 </template>
 
 <script setup>
-// 引入网站配置（站名等）
+import { ref } from 'vue'
 import { site } from './data/site.js'
+const menuOpen = ref(false)
 </script>
 
 <style>
@@ -155,28 +164,57 @@ body {
   );
 }
 
+/* ============ 汉堡菜单按钮 ============ */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+}
+.hamburger span {
+  width: 24px;
+  height: 2.5px;
+  background: #141416;
+  border-radius: 2px;
+  transition: 0.3s;
+}
+
 /* ============ 响应式：手机端 ============ */
 @media (max-width: 750px) {
   .nav {
     padding: 14px 16px;
-    flex-wrap: wrap;          /* 允许换行 */
+    flex-wrap: wrap;
     gap: 10px;
   }
+  .hamburger {
+    display: flex;
+    order: 2;
+  }
   .nav-links {
-    order: 3;                 /* 导航链接换到第二行 */
+    display: none;
+    order: 3;
     width: 100%;
-    justify-content: center;
-    gap: 20px;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 0;
+    text-align: center;
+  }
+  .nav-links.open {
+    display: flex;
   }
   .nav-links a {
-    font-size: 13px;
+    font-size: 15px;
   }
   .nav-cta {
     padding: 8px 16px;
     font-size: 12px;
+    order: 1;
   }
   .page {
-    padding: 140px 16px 60px;
+    padding: 120px 16px 60px;
   }
 }
 </style>

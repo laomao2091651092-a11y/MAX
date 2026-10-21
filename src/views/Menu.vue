@@ -4,7 +4,6 @@
     <div class="menu-head">
       <div class="eyebrow">Menu</div>
       <h2>今天想<span class="grad">吃点什么？</span></h2>
-      <p>点一点想吃的菜，生成清单发给 TA，等着被投喂 🍽️</p>
     </div>
 
     <!-- ============ 分类筛选按钮 ============ -->
@@ -162,7 +161,7 @@ const totalHearts = computed(() => {
 async function order() {
   // 把清单拼成文案
   const lines = cart.map((item) => `${item.name}×${item.count}`)
-  const text = `宝贝，今天我想吃：${lines.join('、')}，一共 ${totalCount.value} 道菜，等你投喂！🧡`
+  const text = `今天我想吃：${lines.join('、')}，一共 ${totalCount.value} 道菜`
 
   try {
     // 复制到剪贴板（需要 https 或 localhost 环境，本地开发没问题）
@@ -259,7 +258,7 @@ async function order() {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
-  padding-bottom: 40px;
+  padding-bottom: 100px;
 }
 .dish-card {
   border-radius: 22px;

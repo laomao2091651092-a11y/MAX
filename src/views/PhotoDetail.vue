@@ -576,46 +576,67 @@ onUnmounted(() => {
 /* ============ 响应式 ============ */
 @media (max-width: 900px) {
   .pd-body {
-    align-items: center;          /* 水平居中 */
+    align-items: center;
     flex-direction: column;
     padding-top: 10px;
     min-height: 80vh;
+    gap: 10px;
   }
   .pd-visual {
+    position: relative;
     width: 100%;
     right: auto;
-    top: 0;
+    top: auto;
     height: 55vh;
     order: 1;
     opacity: 1;
-    display: flex;               /* 约束布局：气泡居中 */
+    display: flex;
     align-items: center;
     justify-content: center;
+    transform: none;
   }
   .pd-content {
     width: 100%;
-    padding-top: 20px;
+    padding-top: 10px;
     order: 2;
     text-align: center;
     max-width: 500px;
   }
   .pd-content h1 {
-    font-size: clamp(36px, 9vw, 56px);
+    font-size: clamp(32px, 8vw, 48px);
+    margin-bottom: 16px;
+  }
+  .pd-desc {
+    font-size: 14px;
+    margin: 0 auto 20px;
   }
   .pd-nav {
     justify-content: center;
     flex-wrap: wrap;
+    gap: 10px;
+  }
+  .pd-btn {
+    padding: 10px 18px;
+    font-size: 12px;
   }
 }
 @media (max-width: 650px) {
   .pd-header {
-    padding: 18px 20px;
+    padding: 16px 16px;
+  }
+  .pd-back {
+    padding: 8px 14px;
+    font-size: 12px;
   }
   .pd-visual {
-    height: 48vh;
+    height: 40vh;
+    width: 95%;
   }
   .pd-meta {
     display: none;
+  }
+  .pd-content h1 {
+    font-size: 28px;
   }
 }
 </style>
