@@ -6,6 +6,7 @@ import PhotoDetail from '../views/PhotoDetail.vue'
 import ZoomGallery from '../views/ZoomGallery.vue'
 import Cloud from '../views/Cloud.vue'
 import Tarot from '../views/Tarot.vue'
+import Bridge from '../views/Bridge.vue'
 
 // 路由表：每个路由对应一个页面
 const routes = [
@@ -28,6 +29,11 @@ const routes = [
     path: '/tarot',
     name: 'Tarot',
     component: Tarot
+  },
+  {
+    path: '/bridge',
+    name: 'Bridge',
+    component: Bridge
   },
   {
     path: '/menu',

@@ -4,6 +4,7 @@
     <div class="menu-head">
       <div class="eyebrow">Menu</div>
       <h2>今天想<span class="grad">吃点什么？</span></h2>
+      <button class="admin-btn" @click="showAdmin = true">⚙️ 管理</button>
     </div>
 
     <!-- ============ 分类筛选按钮 ============ -->
@@ -23,10 +24,10 @@
     <!-- ============ 菜品网格 ============ -->
     <div class="dish-grid">
       <!-- 根据当前分类筛选后的菜品列表 -->
-      <div v-for="dish in filteredDishes" :key="dish.id" class="dish-card" @click="addToCart(dish)">
+      <div v-for="dish in filteredDishes" :key="dish.id" class="dish-card" @click="openDetail(dish)">
         <!-- 菜品图：有图显示图片，无图用渐变 + emoji 占位 -->
         <div class="dish-img" :style="{ background: `linear-gradient(180deg, ${dish.color[0]}, ${dish.color[1]})` }">
-          <img v-if="dish.img" :src="requireImg(dish.img)" :alt="dish.name" />
+          <img v-if="dish.img" :src="dish.img" :alt="dish.name" />
           <span v-else class="dish-emoji">{{ dish.emoji }}</span>
           <!-- 右上角分类标签 -->
           <span class="dish-tag">{{ dish.category }}</span>
@@ -39,6 +40,10 @@
           <div class="dish-hearts">
             <span v-for="n in dish.hearts" :key="n" class="heart">❤</span>
             <span v-for="n in 5 - dish.hearts" :key="'e' + n" class="heart empty">❤</span>
+          </div>
+          <!-- + 号按钮 -->
+          <div class="dish-add" @click.stop="addToCart(dish)">
+            ＋ 想吃
           </div>
         </div>
       </div>
@@ -84,6 +89,69 @@
         </button>
       </div>
     </div>
+    <!-- ============ 菜品详情弹窗 ============ -->
+    <div v-if="selectedDish" class="detail-modal" @click.self="selectedDish = null">
+      <div class="detail-box">
+        <div class="detail-img" :style="{ background: `linear-gradient(180deg, ${selectedDish.color[0]}, ${selectedDish.color[1]})` }">
+          <img v-if="selectedDish.img" :src="selectedDish.img" :alt="selectedDish.name" />
+          <span v-else class="detail-emoji">{{ selectedDish.emoji }}</span>
+        </div>
+        <div class="detail-info">
+          <span class="detail-cat">{{ selectedDish.category }}</span>
+          <h3>{{ selectedDish.name }}</h3>
+          <p class="detail-desc">{{ selectedDish.desc }}</p>
+          <div class="detail-hearts">
+            <span v-for="n in selectedDish.hearts" :key="n" class="heart">❤</span>
+            <span v-for="n in 5 - selectedDish.hearts" :key="'e' + n" class="heart empty">❤</span>
+          </div>
+          <!-- 做菜教程占位 -->
+          <div class="detail-tutorial">
+            <h4>📖 做菜教程</h4>
+            <p class="tutorial-placeholder">这里以后会加做菜步骤教程～</p>
+          </div>
+          <div class="detail-btns">
+            <button class="detail-add" @click="addToCart(selectedDish); selectedDish = null">
+              ＋ 想吃这道
+            </button>
+            <button class="detail-close" @click="selectedDish = null">
+              关闭
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 管理弹窗 ============ -->
+    <div v-if="showAdmin" class="admin-modal" @click.self="showAdmin = false">
+      <div class="admin-box">
+        <h3>⚙️ 管理模式</h3>
+        
+        <!-- 密码输入 -->
+        <div v-if="!adminUnlocked" class="admin-login">
+          <p>请输入管理密码：</p>
+          <input type="password" v-model="adminPwd" placeholder="密码" @keyup.enter="checkPwd" />
+          <button class="admin-login-btn" @click="checkPwd">进入</button>
+          <button class="admin-close" @click="showAdmin = false">取消</button>
+        </div>
+
+        <!-- 菜品编辑列表 -->
+        <div v-else class="admin-list">
+          <div v-for="dish in dishes" :key="dish.id" class="admin-item">
+            <div class="admin-item-info">
+              <span class="admin-item-emoji">{{ dish.emoji }}</span>
+              <input v-model="dish.name" class="admin-name-input" />
+            </div>
+            <div class="admin-item-ctrl">
+              <label class="admin-upload-btn">
+                📷 换图
+                <input type="file" accept="image/*" @change="uploadImg($event, dish)" hidden />
+              </label>
+              <button class="admin-close" @click="showAdmin = false">完成</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -107,6 +175,41 @@ const cart = reactive([])
 
 // 清单面板开关（移动端用）
 const cartOpen = ref(false)
+
+// 管理模式
+const showAdmin = ref(false)
+const adminUnlocked = ref(false)
+const adminPwd = ref('')
+
+// 选中的菜品（详情弹窗）
+const selectedDish = ref(null)
+
+// 打开详情
+function openDetail(dish) {
+  selectedDish.value = dish
+}
+
+// 检查密码
+function checkPwd() {
+  if (adminPwd.value === 'mjy') {
+    adminUnlocked.value = true
+    adminPwd.value = ''
+  } else {
+    alert('密码不对！')
+    adminPwd.value = ''
+  }
+}
+
+// 上传菜品图片
+function uploadImg(e, dish) {
+  const file = e.target.files[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = (ev) => {
+    dish.img = ev.target.result
+  }
+  reader.readAsDataURL(file)
+}
 
 // 根据文件名拼出图片路径（图片放在 src/assets/images/dishes/ 下）
 function requireImg(name) {
@@ -469,6 +572,226 @@ async function order() {
   transform: none;
 }
 
+/* ============ 菜品卡片添加按钮 ============ */
+.dish-add {
+  margin-top: 10px;
+  display: inline-block;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, #d9351f, #f58b4e);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ============ 菜品详情弹窗 ============ */
+.detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.detail-box {
+  background: #fffaf0;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 450px;
+  max-height: 85vh;
+  overflow-y: auto;
+  overflow: hidden;
+}
+.detail-img {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.detail-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.detail-emoji {
+  font-size: 80px;
+}
+.detail-info {
+  padding: 20px;
+}
+.detail-cat {
+  display: inline-block;
+  background: #fff;
+  color: #d9351f;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.detail-info h3 {
+  font-size: 24px;
+  color: #2b2b30;
+  margin-bottom: 8px;
+}
+.detail-desc {
+  color: #8b847a;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.detail-hearts {
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+.detail-tutorial {
+  background: #fff;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid #ede6d6;
+}
+.detail-tutorial h4 {
+  font-size: 15px;
+  color: #2b2b30;
+  margin-bottom: 8px;
+}
+.tutorial-placeholder {
+  color: #8b847a;
+  font-size: 13px;
+}
+.detail-btns {
+  display: flex;
+  gap: 10px;
+}
+.detail-add {
+  flex: 1;
+  padding: 12px;
+  background: linear-gradient(135deg, #d9351f, #f58b4e);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.detail-close {
+  padding: 12px 20px;
+  background: #e5dcc8;
+  color: #666;
+  border: none;
+  border-radius: 999px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* ============ 管理按钮 ============ */
+.admin-btn {
+  background: transparent;
+  border: none;
+  color: #8b847a;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 10px;
+  opacity: 0.6;
+}
+.admin-btn:hover {
+  opacity: 1;
+}
+
+/* ============ 管理弹窗 ============ */
+.admin-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.admin-box {
+  background: #fffaf0;
+  border-radius: 20px;
+  padding: 30px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.admin-box h3 {
+  margin-bottom: 20px;
+  color: #2b2b30;
+}
+.admin-login {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.admin-login input {
+  padding: 10px 15px;
+  border: 1.5px solid #dad2bf;
+  border-radius: 10px;
+  font-size: 14px;
+}
+.admin-login-btn, .admin-close, .admin-upload-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #d9351f, #f58b4e);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+.admin-close {
+  background: #e5dcc8;
+  color: #666;
+}
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.admin-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #ede6d6;
+}
+.admin-item-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-item-emoji {
+  font-size: 24px;
+}
+.admin-name-input {
+  padding: 6px 10px;
+  border: 1px solid #dad2bf;
+  border-radius: 8px;
+  font-size: 14px;
+  width: 120px;
+}
+.admin-item-ctrl {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.admin-upload-btn {
+  display: inline-block;
+  cursor: pointer;
+}
+
 /* ============ 响应式 ============ */
 @media (max-width: 1100px) {
   .dish-grid {
@@ -477,11 +800,24 @@ async function order() {
 }
 @media (max-width: 750px) {
   .dish-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 14px;
+  }
+  .dish-card {
+    display: flex;
+    align-items: center;
+  }
+  .dish-img {
+    width: 100px;
+    min-width: 100px;
+    aspect-ratio: 1;
   }
   .dish-emoji {
     font-size: 40px;
+  }
+  .dish-info {
+    text-align: left;
+    flex: 1;
   }
   /* 移动端清单：固定底部，默认收起 */
   .cart {

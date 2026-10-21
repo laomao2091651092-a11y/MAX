@@ -21,6 +21,7 @@
         <li><router-link to="/gallery" @click="menuOpen = false">画廊</router-link></li>
         <li><router-link to="/cloud" @click="menuOpen = false">相册</router-link></li>
         <li><router-link to="/tarot" @click="menuOpen = false">塔罗占卜 🔮</router-link></li>
+        <li><router-link to="/bridge" @click="menuOpen = false">桥牌社 🃏</router-link></li>
         <li><router-link to="/menu" @click="menuOpen = false">点菜</router-link></li>
         <li><a href="/haunt.html">幽灵控制台 👻</a></li>
         <li><a href="/wan-sheng.html">万圣来啦 🎃</a></li>

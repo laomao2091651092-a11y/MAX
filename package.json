@@ -7,6 +7,7 @@
     "serve": "vite preview"
   },
   "dependencies": {
+    "bridge-dds": "^1.4.0",
     "gsap": "^3.15.0",
     "vue": "^3.2.8",
     "vue-router": "^4.6.4"
