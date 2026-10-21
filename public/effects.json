@@ -17,8 +17,8 @@
     "lastScare: the id of the scare that ends every night (the grand finale)."
   ],
   "files": {
-    "video": "/knock-knock-halloween-19.mp4",
-    "poster": "/haunted-house-codepen.jpg",
+    "video": "./knock-knock-halloween-19.mp4",
+    "poster": "./haunted-house-codepen.jpg",
     "startOnKnock": true,
     "videoSound": true,
     "loop": true,
@@ -118,7 +118,7 @@
       "effect": "door",
       "on": true,
       "line": "HE'S BEEN EXPECTING YOU.",
-      "image": "/vampire-cutout.webp",
+      "image": "./vampire-cutout.webp",
       "hold": 2200
     },
     {

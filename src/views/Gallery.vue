@@ -160,7 +160,7 @@ const lightboxIndex = ref(null)
 const activeTab = ref('portrait')
 
 // ===== 云端精选照片（画廊展示位） =====
-const API_BASE = 'http://localhost:8080'
+const API_BASE = 'http://81.71.99.210'
 const featuredPhotos = ref([])      // 后端精选的照片
 const uploading = ref(false)      // 上传中状态
 const fileInput = ref(null)         // 隐藏的文件选择器

@@ -44,7 +44,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
-const API_BASE = 'http://localhost:8080'
+const API_BASE = 'http://81.71.99.210'
 const photos = ref([])
 const uploading = ref(false)
 const fileInput = ref(null)
