@@ -9,7 +9,26 @@
     <!-- ============ 功能切换 ============ -->
     <div class="tabs">
       <button class="tab" :class="{ active: tab === 'intro' }" @click="tab = 'intro'">📖 玩法</button>
-      <button class="tab" :class="{ active: tab === 'play' }" @click="startGame">🤖 开始对战</button>
+      <button class="tab" :class="{ active: tab === 'wheel' }" @click="showWheel = true; tab = 'wheel'">🤖 开始对战</button>
+    </div>
+
+    <!-- ============ 转盘选先后手 ============ -->
+    <div v-if="tab === 'wheel'" class="wheel-stage">
+      <div class="wheel-container">
+        <div class="wheel" :style="{ transform: `rotate(${wheelRotation}deg)` }">
+          <div class="wheel-section north">北</div>
+          <div class="wheel-section east">东</div>
+          <div class="wheel-section south">你</div>
+          <div class="wheel-section west">西</div>
+        </div>
+        <div class="wheel-pointer"></div>
+        <button class="spin-btn" @click="spinWheel" :disabled="isSpinning">
+          {{ isSpinning ? '转动中...' : '开始转盘' }}
+        </button>
+        <div v-if="wheelResult" class="wheel-result">
+          👉 {{ wheelResult }} 先叫牌！
+        </div>
+      </div>
     </div>
 
     <!-- ============ 玩法介绍 ============ -->
@@ -220,7 +239,13 @@
 import { ref, computed, onMounted } from 'vue'
 
 const tab = ref('intro')
-const cardBack = new URL('../assets/Playing cards/牌背.png', import.meta.url).href
+const cardBack = new URL('../assets/Playing cards/牌背.jpg', import.meta.url).href
+
+// 转盘状态
+const showWheel = ref(false)
+const wheelRotation = ref(0)
+const isSpinning = ref(false)
+const wheelResult = ref('')
 
 // 游戏状态
 const yourHand = ref([])
@@ -237,7 +262,7 @@ let countdownTimer = null
 // 叫牌状态
 const biddingPhase = ref(true)
 const bidHistory = ref([])
-const currentBidder = ref('south')
+const currentBidder = ref('west')
 const highestBid = ref(null)
 const passCount = ref(0)
 const trumpSuit = ref(null)
@@ -290,7 +315,7 @@ function getSuit(card) {
 
 // 获取图片路径
 function getCardImg(card) {
-  return new URL(`../assets/Playing cards/${card}.png`, import.meta.url).href
+  return new URL(`../assets/Playing cards/${card}.jpg`, import.meta.url).href
 }
 
 // 开始倒计时
@@ -458,8 +483,44 @@ async function aiChooseCard(hand, leadSuit, currentCards) {
   }
 }
 
+// 转盘转动
+function spinWheel() {
+  if (isSpinning.value) return
+  isSpinning.value = true
+  wheelResult.value = ''
+  
+  // 随机转5-8圈，然后随机停在一个位置
+  const randomDeg = 1800 + Math.random() * 1800 // 5-10圈
+  wheelRotation.value += randomDeg
+  
+  setTimeout(() => {
+    isSpinning.value = false
+    // 指针在顶部（0度位置），转盘转了wheelRotation度，
+    // 所以指针指向的转盘上的角度是 (360 - wheelRotation % 360) % 360
+    const pointerAngle = (360 - (wheelRotation.value % 360)) % 360
+    // 四个色块（每个90度，分界线在45/135/225/315度，中心在0/90/180/270度）：
+    // 红=北：315-45度（中心0度）
+    // 蓝=东：45-135度（中心90度）
+    // 绿=南(你)：135-225度（中心180度）
+    // 黄=西：225-315度（中心270度）
+    let firstBidder
+    if (pointerAngle >= 315 || pointerAngle < 45) firstBidder = 'north'
+    else if (pointerAngle >= 45 && pointerAngle < 135) firstBidder = 'east'
+    else if (pointerAngle >= 135 && pointerAngle < 225) firstBidder = 'south'
+    else firstBidder = 'west'
+    
+    const names = { north: '北家', east: '东家', south: '你', west: '西家' }
+    wheelResult.value = names[firstBidder]
+    
+    // 延迟一下，然后开始游戏
+    setTimeout(() => {
+      startGame(firstBidder)
+    }, 1500)
+  }, 3000)
+}
+
 // 开始游戏
-function startGame() {
+function startGame(firstBidder = 'south') {
   const deck = shuffle(generateDeck())
   yourHand.value = deck.slice(0, 13)
   northHand.value = deck.slice(13, 26)
@@ -490,7 +551,7 @@ function startGame() {
   // 重置叫牌
   biddingPhase.value = true
   bidHistory.value = []
-  currentBidder.value = 'south'
+  currentBidder.value = firstBidder
   highestBid.value = null
   passCount.value = 0
   trumpSuit.value = null
@@ -499,6 +560,13 @@ function startGame() {
   targetTricks.value = 0
   
   tab.value = 'play'
+  
+  // 如果第一个叫牌的不是你，自动开始AI叫牌
+  if (firstBidder !== 'south') {
+    setTimeout(() => {
+      aiBid()
+    }, 1000)
+  }
 }
 
 // 玩家出牌
@@ -648,6 +716,99 @@ function judgeTrick() {
   padding: 50px 20px 30px;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+/* ============ 转盘样式 ============ */
+.wheel-stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+}
+.wheel-container {
+  position: relative;
+  text-align: center;
+}
+.wheel {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  border: 8px solid #8b5a2b;
+  position: relative;
+  overflow: hidden;
+  transition: transform 3s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  background: conic-gradient(
+    from -45deg,
+    #d9351f 0deg 90deg,
+    #2d5f8a 90deg 180deg,
+    #2d8a4e 180deg 270deg,
+    #8a7a2d 270deg 360deg
+  );
+}
+.wheel-section {
+  position: absolute;
+  font-weight: bold;
+  font-size: 24px;
+  color: #fff;
+}
+.wheel-section.north {
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.wheel-section.east {
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.wheel-section.south {
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.wheel-section.west {
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.wheel-pointer {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-top: 25px solid #d9351f;
+  z-index: 10;
+}
+.spin-btn {
+  margin-top: 30px;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  background: #141416;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.spin-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+.spin-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.wheel-result {
+  margin-top: 20px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #d9351f;
 }
 
 .bridge-head {

@@ -262,14 +262,13 @@ onMounted(() => {
           const target = parseFloat(el.dataset.count)
           const span = el.querySelector('span')
           const decimals = (String(target).split('.')[1] || '').length
-          gsap.fromTo(
-            { v: 0 },
-            {
+          const obj = { v: 0 }
+          gsap.to(obj, {
               v: target,
               duration: 2,
               ease: 'power2.out',
               onUpdate: function () {
-                span.textContent = this.targets()[0].v.toFixed(decimals)
+                span.textContent = obj.v.toFixed(decimals)
               }
             }
           )
