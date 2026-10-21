@@ -676,12 +676,12 @@ function judgeTrick() {
     currentPlayer.value = winner.player
     isPlaying.value = false
     
-    // 游戏结束
-    if (yourHand.value.length === 0) {
+    // 游戏结束：打完13墩
+    if (totalTricks.value >= 13) {
       stopCountdown()
       const made = ourTricks.value >= targetTricks.value
       setTimeout(() => {
-        alert(`游戏结束！\n定约：${contract.value}\n目标：${targetTricks.value} 墩\n我方赢了：${ourTricks.value} 墩\n${made ? '✅ 完成定约！' : '❌ 没完成定约'}`)
+        alert(`🎉 13墩打完！\n定约：${contract.value}\n目标：${targetTricks.value} 墩\n我方赢了：${ourTricks.value} 墩\n${made ? '✅ 完成定约！赢啦！' : '❌ 没完成定约，输了'}`)
       }, 500)
       return
     }
