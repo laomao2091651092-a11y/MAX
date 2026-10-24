@@ -43,8 +43,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { API_BASE, authHeader } from '../api.js'
 
-const API_BASE = 'http://81.71.99.210'
 const photos = ref([])
 const uploading = ref(false)
 const fileInput = ref(null)
@@ -53,8 +53,10 @@ const featuredCount = computed(() => photos.value.filter(p => p.isFeatured).leng
 
 async function loadPhotos() {
   try {
-    const res = await fetch(`${API_BASE}/api/photos`)
-    photos.value = await res.json()
+    const res = await fetch(`${API_BASE}/photos`, { headers: authHeader() })
+    const all = await res.json()
+    // category=bridge 是桥牌页照片墙专用的，不在相册里重复出现
+    photos.value = (Array.isArray(all) ? all : []).filter(p => p.category !== 'bridge')
   } catch (e) {
     console.warn('后端未启动', e)
   }
@@ -65,33 +67,30 @@ function triggerUpload() { fileInput.value.click() }
 async function onFileChange(e) {
   const file = e.target.files[0]
   if (!file) return
-  const token = prompt('请输入上传密码：')
-  if (!token) { e.target.value = ''; return }
+  const title = file.name.replace(/\.[^.]+$/, '').slice(0, 30)
+  const category = prompt('分类：输 portrait=竖屏 / landscape=横屏', 'portrait') || 'portrait'
   uploading.value = true
   try {
     const fd = new FormData()
     fd.append('file', file)
-    fd.append('title', file.name.replace(/\.[^.]+$/, '').slice(0, 30))
-    fd.append('category', prompt('分类：输 portrait=竖屏 / landscape=横屏', 'portrait'))
-    const res = await fetch(`${API_BASE}/api/photos/upload`, {
+    fd.append('title', title)
+    fd.append('category', category)
+    const res = await fetch(`${API_BASE}/photos/upload`, {
       method: 'POST',
-      headers: { 'X-Upload-Token': token },
+      headers: authHeader(),
       body: fd,
     })
     const data = await res.json()
     if (data.code === 0) { alert('✅ 上传成功'); loadPhotos() }
     else alert('❌ ' + data.message)
-  } catch { alert('❌ 后端未启动') }
+  } catch { alert('❌ 网络错误，后端连不上？') }
   finally { uploading.value = false; e.target.value = '' }
 }
 
 async function toggleFeatured(p) {
-  const token = prompt('管理员密码：')
-  if (!token) return
   try {
-    const res = await fetch(`${API_BASE}/api/photos/${p.id}/featured?featured=${!p.isFeatured}`, {
-      method: 'PUT',
-      headers: { 'X-Upload-Token': token },
+    const res = await fetch(`${API_BASE}/photos/${p.id}/featured?featured=${!p.isFeatured}`, {
+      method: 'PUT', headers: authHeader(),
     })
     const data = await res.json()
     if (data.code === 0) loadPhotos()
@@ -101,12 +100,9 @@ async function toggleFeatured(p) {
 
 async function deletePhoto(p) {
   if (!confirm(`确定删除「${p.title}」吗？`)) return
-  const token = prompt('管理员密码：')
-  if (!token) return
   try {
-    const res = await fetch(`${API_BASE}/api/photos/${p.id}`, {
-      method: 'DELETE',
-      headers: { 'X-Upload-Token': token },
+    const res = await fetch(`${API_BASE}/photos/${p.id}`, {
+      method: 'DELETE', headers: authHeader()
     })
     const data = await res.json()
     if (data.code === 0) { alert('🗑️ 已删除'); loadPhotos() }
@@ -117,12 +113,9 @@ async function deletePhoto(p) {
 async function renamePhoto(p) {
   const newName = prompt('改名字：', p.title)
   if (!newName || newName === p.title) return
-  const token = prompt('管理员密码：')
-  if (!token) return
   try {
-    const res = await fetch(`${API_BASE}/api/photos/${p.id}/title?title=${encodeURIComponent(newName)}`, {
-      method: 'PUT',
-      headers: { 'X-Upload-Token': token },
+    const res = await fetch(`${API_BASE}/photos/${p.id}/title?title=${encodeURIComponent(newName)}`, {
+      method: 'PUT', headers: authHeader()
     })
     const data = await res.json()
     if (data.code === 0) loadPhotos()

@@ -1,7 +1,8 @@
 <template>
   <div class="app-shell">
     <!-- ============ 全局导航 ============ -->
-    <nav class="nav">
+    <!-- 登录/注册页不显示导航栏 -->
+    <nav class="nav" v-if="route.name !== 'Login' && route.name !== 'Register'">
       <!-- Logo -->
       <router-link to="/" class="logo">
         <span class="logo-dot"></span>
@@ -21,14 +22,38 @@
         <li><router-link to="/gallery" @click="menuOpen = false">画廊</router-link></li>
         <li><router-link to="/cloud" @click="menuOpen = false">相册</router-link></li>
         <li><router-link to="/tarot" @click="menuOpen = false">塔罗占卜 🔮</router-link></li>
-        <li><router-link to="/bridge" @click="menuOpen = false">桥牌社 🃏</router-link></li>
         <li><router-link to="/menu" @click="menuOpen = false">点菜</router-link></li>
+        <li><router-link to="/bridge" @click="menuOpen = false">桥牌社 🃏</router-link></li>
+        <li><router-link to="/messages" @click="menuOpen = false">悄悄话 💬</router-link></li>
+        <li><a href="#" @click.prevent="logout">退出 🚪</a></li>
         <li><a href="/wan-sheng.html">万圣来啦 🎃</a></li>
       </ul>
 
       <!-- 右侧按钮 -->
       <router-link to="/menu" class="nav-cta">今天想吃 🍽️</router-link>
+
+      <!-- 右上角方块头像（奶油风格，点开是个人菜单） -->
+      <div class="nav-user" v-if="me" @click="userMenuOpen = !userMenuOpen">
+        <div class="nav-avatar">{{ avatarLetter }}</div>
+        <div v-if="userMenuOpen" class="user-menu" @click.stop>
+          <div class="um-head">
+            <div class="um-avatar">{{ avatarLetter }}</div>
+            <div class="um-meta">
+              <div class="um-name">{{ me.nickname || me.username }}</div>
+              <div class="um-uname">@{{ me.username }}</div>
+            </div>
+          </div>
+          <router-link to="/profile" @click="userMenuOpen = false">👤 个人资料</router-link>
+          <router-link to="/password" @click="userMenuOpen = false">🔑 修改密码</router-link>
+          <router-link to="/friends" @click="userMenuOpen = false">🤝 好友</router-link>
+          <router-link v-if="me.role === 'ADMIN'" to="/admin" @click="userMenuOpen = false">🛡️ 管理后台</router-link>
+          <a href="#" class="um-logout" @click.prevent="doLogout">🚪 退出登录</a>
+        </div>
+      </div>
     </nav>
+
+    <!-- 头像菜单点击空白处关闭 -->
+    <div v-if="userMenuOpen" class="menu-backdrop" @click="userMenuOpen = false"></div>
 
     <!-- 路由出口 -->
     <router-view />
@@ -36,9 +61,33 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { site } from './data/site.js'
+import { useAuth } from './composables/useAuth.js'
 const menuOpen = ref(false)
+const userMenuOpen = ref(false)
+const route = useRoute()
+const router = useRouter()
+
+// 全局登录用户状态
+const { state, fetchMe, logout } = useAuth()
+const me = computed(() => state.user)
+const avatarLetter = computed(() => {
+  const n = (me.value && (me.value.nickname || me.value.username)) || '?'
+  return String(n).charAt(0).toUpperCase()
+})
+
+// 进入页面（含刷新）时拉取一次“我”的资料，让头像正确显示
+onMounted(() => { fetchMe() })
+
+// 退出登录：清掉本地登录信息，回到登录页
+function doLogout() {
+  logout()
+  userMenuOpen.value = false
+  menuOpen.value = false
+  router.push('/login')
+}
 </script>
 
 <style>
@@ -152,6 +201,98 @@ body {
   transform: translateY(-2px);
 }
 
+/* ============ 右上角方块头像 ============ */
+.nav-user {
+  position: relative;
+  margin-left: 14px;
+  cursor: pointer;
+}
+.nav-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px; /* 方块（圆角）奶油风 */
+  background: linear-gradient(180deg, #fbe7c6, #f3d29a);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 6px 14px -6px rgba(180, 130, 60, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 17px;
+  color: #7a4a16;
+  transition: transform 0.2s;
+}
+.nav-user:hover .nav-avatar {
+  transform: translateY(-1px);
+}
+/* 下拉菜单 */
+.user-menu {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  width: 220px;
+  padding: 10px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 20px 44px rgba(120, 90, 50, 0.22);
+  z-index: 60;
+}
+.um-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 8px;
+}
+.um-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fbe7c6, #f3d29a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 19px;
+  color: #7a4a16;
+}
+.um-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: #141416;
+}
+.um-uname {
+  font-size: 12px;
+  color: #8b847a;
+}
+.user-menu a {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #2b2b30;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.user-menu a:hover {
+  background: rgba(217, 53, 31, 0.08);
+  color: #d9351f;
+}
+.um-logout {
+  color: #b23b2a !important;
+}
+/* 点击空白关闭菜单的蒙层 */
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+}
+
 /* 页面内容区域：留出导航高度，并统一奶油渐变背景 */
 .page {
   min-height: 100vh;
@@ -212,6 +353,10 @@ body {
     padding: 8px 16px;
     font-size: 12px;
     order: 1;
+  }
+  .nav-user {
+    order: 1;
+    margin-left: 8px;
   }
   .page {
     padding: 120px 16px 60px;
